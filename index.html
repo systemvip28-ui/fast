@@ -75,7 +75,7 @@ body{
 .winPercent{font-weight:900;color:var(--accent)}
 .popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .18s}
 .popup-overlay.show{opacity:1;pointer-events:auto}
-.popup{background:linear-gradient(180deg,#fffaf0,#fff0b0);color:#23160b;padding:18px 22px;border-radius:12px;min-width:280px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.5)}
+.popup{background:linear-gradient(180deg,#fffaf0,#fff0b0);color:#23160b;padding:18px 22px;border-radius:12px;width:90%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.5)}
 .popup h2{margin:0 0 8px 0}
 .popup p{margin:6px 0 12px 0}
 .popup button{background:#ffd76b;border:none;padding:10px 16px;border-radius:10px;font-weight:900;cursor:pointer}
@@ -128,6 +128,11 @@ label[for="scatterRange"] {
   width: 0 !important;
   height: 0 !important;
   pointer-events: none !important;
+}
+.cell.scatter-shake {
+  animation: shake 0.6s ease-in-out;
+  box-shadow: 0 0 18px rgba(255, 215, 107, 0.8);
+  border-color: #ffd76b;
 }
 </style>
 </head>
@@ -216,7 +221,6 @@ label[for="scatterRange"] {
   </div>
 </div>
 
-  
 <div class="popup-overlay" id="alertPopup" aria-hidden="true">
   <div class="popup">
     <p id="alertText">Pesan alert</p>
@@ -236,6 +240,18 @@ label[for="scatterRange"] {
   </div>
 </div>
 
+<audio id="sfxScatter" preload="auto">
+  <source src="https://systemvip28-ui.github.io/scatter/original%20sound%20-%20ringtone_29_musicaldown.com_1766375686.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="clickSound" preload="auto">
+  <source src="https://systemvip28-ui.github.io/soundbg/lv_0_20251222115622.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="sfxBolt" preload="auto">
+  <source src="https://systemvip28-ui.github.io/bg/lv_0_20251222124143.mp3" type="audio/mpeg">
+</audio>
+
 <script>
 /* ====== CONFIG ====== */
 const SYMBOLS = [
@@ -249,17 +265,27 @@ const SYMBOLS = [
   {id:'slot', e:'🎰', val:0, scatter:true}
 ];
 
-const BOLT_MULTS = {2:420, 4:240, 8:10, 12:7, 25:5, 500:3};
+let BOLT_MULT_PERCENTS = {
+  2: 80,
+  4: 65,
+  8: 40,
+  12: 7,
+  25: 4,
+  50: 3,
+  100: 2,
+  500: 1
+};
 
 const ROWS = 4, COLS = 5, POS = ROWS * COLS;
-const SCATTER_POS_PROB = 0.05;
 const SCATTER_MAX = 4;
 const FREE_SPIN_COUNT = 12;
+const SPIN_DELAY = 350;
 
 /* ====== STATE ====== */
 let balance = 0;
 let bet = 2000;
-let winRate = 1; 
+let winRate = 10; 
+let SCATTER_POS_PROB = 0.05;
 let scatterRate = 0;
 let freeSpins = 0;
 let pendingFreeSpins = 0;
@@ -340,46 +366,61 @@ function weightedPickFromObj(obj){
 }
 
 function pickBolt(isFree){
-  const adj = {};
-  for(const k in BOLT_MULTS){
-    let w = Number(BOLT_MULTS[k]);
-    if(isFree && parseInt(k,10) >= 12) w = Math.floor(w * 1.6);
-    adj[k] = w;
+  const entries = Object.entries(BOLT_MULT_PERCENTS)
+    .map(([mult, percent]) => ({
+      mult: parseInt(mult, 10),
+      weight: Math.max(0, percent)
+    }));
+
+  const total = entries.reduce((a,b)=>a+b.weight,0);
+  let r = Math.random() * total;
+
+  for(const e of entries){
+    r -= e.weight;
+    if(r <= 0) return e.mult;
   }
-  return weightedPickFromObj(adj);
+  return entries[0].mult;
 }
 
 /* ====== SYMBOL GENERATION ====== */
 function generateSymbols(forceWin=false, isFree=false){
   const arr = new Array(POS);
-  let scatAllowed = SCATTER_MAX;
-  for(let i=0;i<POS;i++){
-    if(!isFree && Math.random() < SCATTER_POS_PROB && scatAllowed > 0){
-      arr[i] = SYMBOLS.find(s => s.scatter);
-      scatAllowed--;
-    } else {
-      const non = SYMBOLS.filter(s => !s.scatter);
-      arr[i] = non[Math.floor(Math.random()*non.length)];
+
+  let scatterCount = 0;
+  if(!isFree){
+    if(Math.random() < (SCATTER_POS_PROB / 100)){
+      scatterCount = Math.floor(Math.random() * (SCATTER_MAX + 1));
     }
   }
 
-  let scount = arr.filter(s => s.scatter).length;
-  if(scount > SCATTER_MAX){
-    for(let i=0;i<arr.length && scount>SCATTER_MAX;i++){
-      if(arr[i].scatter){ arr[i] = SYMBOLS.filter(s => !s.scatter)[Math.floor(Math.random()*(SYMBOLS.length-1))]; scount--; }
+  const scatterPositions = [];
+  while(scatterPositions.length < scatterCount){
+    const r = Math.floor(Math.random() * POS);
+    if(!scatterPositions.includes(r)){
+      scatterPositions.push(r);
+    }
+  }
+
+  for(let i = 0; i < POS; i++){
+    if(scatterPositions.includes(i)){
+      arr[i] = SYMBOLS.find(s => s.scatter);
+    } else {
+      const non = SYMBOLS.filter(s => !s.scatter);
+      arr[i] = non[Math.floor(Math.random() * non.length)];
     }
   }
 
   if(forceWin){
     const non = SYMBOLS.filter(s => !s.scatter);
-    const candidate = non[Math.floor(Math.random()*non.length)];
+    const candidate = non[Math.floor(Math.random() * non.length)];
     const idxs = [];
     while(idxs.length < 8){
-      const r = Math.floor(Math.random()*POS);
-      if(!idxs.includes(r)) idxs.push(r);
+      const r = Math.floor(Math.random() * POS);
+      if(!idxs.includes(r) && !arr[r].scatter) idxs.push(r);
     }
     idxs.forEach(i => arr[i] = candidate);
   }
+
   return arr;
 }
 
@@ -410,6 +451,8 @@ function analyze(symbols){
 
 /* ====== VISUALS ====== */
 function playBolt(mult){
+  playSound(sfxBolt); 
+
   boltTxt.textContent = 'x' + mult;
   boltWrap.style.display = 'block';
   bolt.classList.remove('show');
@@ -429,6 +472,20 @@ async function hideWinners(symbols, winId){
       cells[i].classList.add('hidden');
     }
   }
+}
+
+async function shakeScatter(symbols){
+  const cells = Array.from(gridEl.querySelectorAll('.cell'));
+
+  cells.forEach((cell, i) => {
+    if(symbols[i].scatter){
+      cell.classList.add('scatter-shake');
+    }
+  });
+
+  await sleep(650);
+
+  cells.forEach(cell => cell.classList.remove('scatter-shake'));
 }
 
 function animateWin(total){
@@ -454,7 +511,7 @@ function animateWin(total){
 }
 
 function megaWin(total, mult){
-  megaWinEl.textContent = `MEGA WIN x${mult} +Rp ${fmt(total)}`;
+  megaWinEl.textContent = `MEGA WIN`;
   megaWinEl.style.display = 'block';
   megaWinEl.style.transform = 'translate(-50%,-50%) scale(1.08)';
   setTimeout(()=>{ megaWinEl.style.transform = 'translate(-50%,-50%) scale(1)'; }, 60);
@@ -543,37 +600,72 @@ async function doSpin(isAuto=false){
 
   const {winner, scount} = analyze(symbols);
 
-  if(winner){
-    const mult = pickBolt(wasFree);
-    const base = bet * winner.val;
-    const total = Math.floor(base * mult);
+  let didWin = false;
+let didScatter = false;
 
-    playBolt(mult);
-    document.querySelector('.zeus-glow').style.opacity = 1;
-    setTimeout(()=> document.querySelector('.zeus-glow').style.opacity = 0.85, 70);
-    await sleep(320);
-    await hideWinners(symbols, winner.id);
-    await animateWin(total);
-    balance += total;
-    if(mult >= 12){
-      megaWin(total, mult);
-    }
-    pushHistory({winSymbol: winner, mult, win: total, bet: wasFree ? 0 : bet});
-  } else if(scount >= 4 && !wasFree){
-    pendingFreeSpins = FREE_SPIN_COUNT;
-    showFreeSpinPopup(scount);
-    pushHistory({scatter: true, scatterCount: scount, mult: null, win: 0, bet: wasFree ? 0 : bet});
-    hideCountdown();
-    stopAuto();
-  } else {
-    pushHistory({win: null, bet: wasFree ? 0 : bet});
+// ===== PROSES WIN =====
+if(winner){
+  didWin = true;
+
+  const mult = pickBolt(wasFree);
+  const base = bet * winner.val;
+  const total = Math.floor(base * mult);
+
+  playBolt(mult);
+  document.querySelector('.zeus-glow').style.opacity = 1;
+  setTimeout(()=> document.querySelector('.zeus-glow').style.opacity = 0.85, 70);
+
+  await sleep(320);
+  await hideWinners(symbols, winner.id);
+  await animateWin(total);
+
+  balance += total;
+
+  if(mult >= 12){
+    megaWin(total, mult);
   }
+
+  pushHistory({
+    winSymbol: winner,
+    mult,
+    win: total,
+    bet: wasFree ? 0 : bet
+  });
+}
+
+if(scount >= 4 && !wasFree){
+  didScatter = true;
+
+  playSound(sfxScatter);
+  pendingFreeSpins = FREE_SPIN_COUNT;
+
+  await shakeScatter(symbols);
+  await sleep(300);
+
+  showFreeSpinPopup(scount);
+
+  pushHistory({
+    scatter: true,
+    scatterCount: scount,
+    mult: null,
+    win: 0,
+    bet: wasFree ? 0 : bet
+  });
+
+  hideCountdown();
+  stopAuto();
+}
+
+if(!didWin && !didScatter){
+  pushHistory({win: null, bet: wasFree ? 0 : bet});
+}
 
   if(wasFree){
     freeSpins = Math.max(0, freeSpins - 1);
   }
 
   updateUI();
+  await sleep(SPIN_DELAY);
   spinning = false;
   spinBtn.disabled = false;
 }
@@ -719,6 +811,30 @@ winRateInput.addEventListener('input', e => { winRate = parseInt(e.target.value,
 
 document.addEventListener('keydown', (e) => { if(e.key === ' ') { e.preventDefault(); if(!autoActive) doSpin(false); } });
 
+/* ====== AUDIO ====== */
+const sfxScatter = document.getElementById('sfxScatter');
+const sfxBolt = document.getElementById('sfxBolt');
+
+function playSound(audio){
+  if(!audio) return;
+  audio.currentTime = 0;
+  audio.play().catch(()=>{});
+}
+
+let audioUnlocked = false;
+document.addEventListener('click', () => {
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+  [sfxScatter, sfxBolt].forEach(a=>{
+    a.muted = true;
+    a.play().then(()=>{
+      a.pause();
+      a.currentTime = 0;
+      a.muted = false;
+    }).catch(()=>{});
+  });
+},{once:true});
+
 /* ====== INIT ====== */
 (function init(){
   renderGrid(generateSymbols(false, false));
@@ -760,8 +876,17 @@ function processTelegramCommand(msg){
     balance += arg;
     updateUI();
     pushHistory({note:`Admin menambah saldo Rp ${fmt(arg)}`, bet:0});
-    sendTelegram(`✅ Saldo berhasil ditambah Rp ${fmt(arg)}.\n✅ Total saldo: Rp ${fmt(balance)}`);
+    sendTelegram(`✅ Saldo berhasil ditambah Rp ${fmt(arg)}`);
   }
+
+else if(cmd === '/setmult' && parts.length === 3){
+  const m = parseInt(parts[1]);
+  const p = parseInt(parts[2]);
+  if(!m || p < 0) return;
+
+  BOLT_MULT_PERCENTS[m] = p;
+  sendTelegram(`✅ Multiplier x${m} diset ${p}%`);
+}
 
   else if(cmd === '/setwinrate' && arg >= 0 && arg <= 100){
     winRate = arg;
@@ -770,8 +895,8 @@ function processTelegramCommand(msg){
   }
 
   else if(cmd === '/setscatter' && arg >= 0 && arg <= 100){
-    window.SCATTER_POS_PROB = arg / 100;
-    sendTelegram(`✅ Peluang scatter diubah jadi ${arg}%`);
+    SCATTER_POS_PROB = arg / 100;
+    sendTelegram(`✅ Scatter rate diatur ke ${arg}%`);
   }
 
   else if(cmd === '/balance'){
@@ -782,6 +907,8 @@ function processTelegramCommand(msg){
     const helpText = `✅ *Daftar Perintah Admin*\n\n` +
     `• /addbalance 50000 — Saldo Rp50.000\n` +
     `• /setwinrate 30 — Set menang 30%\n` +
+    `• /setmult 50 100 — Set x50 menjadi 100%\n` +
+    `• /setscatter 50 — Set peluang 50%\n` +
     `• /balance — Cek saldo pemain\n` +
     `• /help — Tampilkan menu bantuan\n\n` +
     `Gunakan perintah ini hanya untuk admin.`;
@@ -820,14 +947,24 @@ document.body.addEventListener('click', async () => {
   }
 });
 </script>
-<audio src="https://github.com/anonseven/heker/raw/main/v2/videoplayback.m4a" id="lagu" loop></audio>
+<audio id="sound" src="https://systemvip28-ui.github.io/soundbg/lv_0_20251222115622.mp3"
+       preload="auto" loop></audio>
+
 <script>
-  const lagu = document.getElementById('lagu');
-  function mulaiMusik() {
-    lagu.play().catch(err => console.log('', err));
-    document.removeEventListener('click', mulaiMusik);
+  const sound = document.getElementById('sound');
+  let started = false;
+
+  function startSound(){
+    if(started) return;
+    started = true;
+
+    sound.volume = 1;
+    sound.play().catch(()=>{});
+
+    document.removeEventListener('click', startSound);
   }
-  document.addEventListener('click', mulaiMusik);
+
+  document.addEventListener('click', startSound);
 </script>
 </body>
 </html>
