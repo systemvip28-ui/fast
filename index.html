@@ -285,7 +285,7 @@ const SPIN_DELAY = 350;
 let balance = 0;
 let bet = 2000;
 let winRate = 10; 
-let SCATTER_POS_PROB = 0.05;
+let SCATTER_POS_PROB = 10;
 let scatterRate = 0;
 let freeSpins = 0;
 let pendingFreeSpins = 0;
@@ -421,6 +421,27 @@ function generateSymbols(forceWin=false, isFree=false){
     idxs.forEach(i => arr[i] = candidate);
   }
 
+  return arr;
+}
+
+function generateForcedScatter(count = 4){
+  const arr = new Array(POS);
+  const scatter = SYMBOLS.find(s => s.scatter);
+  const non = SYMBOLS.filter(s => !s.scatter);
+
+  const positions = [];
+  while(positions.length < count){
+    const r = Math.floor(Math.random() * POS);
+    if(!positions.includes(r)) positions.push(r);
+  }
+
+  for(let i=0;i<POS;i++){
+    if(positions.includes(i)){
+      arr[i] = scatter;
+    } else {
+      arr[i] = non[Math.floor(Math.random() * non.length)];
+    }
+  }
   return arr;
 }
 
@@ -567,6 +588,11 @@ async function runFreeSpinsAuto(){
   }
 
   freeSpinAutoRunning = false;
+
+  buySpinActive = false;
+  spinBtn.disabled = false; 
+  buyBtn.disabled = false;
+
   setAutoButtonsDisabled(false);
   setControlsDisabled(false);
 }
@@ -600,7 +626,7 @@ async function doSpin(isAuto=false){
 
   const {winner, scount} = analyze(symbols);
 
-  let didWin = false;
+let didWin = false;
 let didScatter = false;
 
 // ===== PROSES WIN =====
@@ -668,6 +694,50 @@ if(!didWin && !didScatter){
   await sleep(SPIN_DELAY);
   spinning = false;
   spinBtn.disabled = false;
+}
+
+async function buySpinVisual(){
+  const price = bet * 100;
+  if(balance < price){
+    await showAlert('Saldo tidak cukup untuk buy spin');
+    return;
+  }
+
+  const ok = await showConfirm(`Beli Free Spins ${FREE_SPIN_COUNT}x seharga Rp ${fmt(price)} ?`);
+  if(!ok) return;
+
+  balance -= price;
+  updateUI();
+
+  spinning = true;
+  spinBtn.disabled = true;
+  buyBtn.disabled = true;
+
+  for(let i=0;i<6;i++){
+    renderGrid(generateSymbols(false,false));
+    await sleep(60 + i*30);
+  }
+
+  const symbols = generateForcedScatter(4);
+  renderGrid(symbols);
+
+  playSound(sfxScatter);
+  await shakeScatter(symbols);
+
+  pendingFreeSpins = FREE_SPIN_COUNT;
+
+  pushHistory({
+    scatter: true,
+    scatterCount: 4,
+    win: 0,
+    bet: price
+  });
+
+  showFreeSpinPopup(4);
+
+  spinning = false;
+  spinBtn.disabled = false;
+  buyBtn.disabled = false;
 }
 
 /* ====== COUNTDOWN ====== */
@@ -794,7 +864,8 @@ function setAutoButtonsDisabled(disabled){
 
 /* ====== EVENT BINDINGS ====== */
 spinBtn.addEventListener('click', ()=>{ if(!autoActive && !spinning) doSpin(false); });
-buyBtn.addEventListener('click', buySpin);
+buyBtn.addEventListener('click', buySpinVisual);
+
 stopAutoBtn.addEventListener('click', stopAuto);
 
 incBet.addEventListener('click', ()=> { bet = Math.min(500000, Math.floor(bet * 1.5)); updateUI(); });
@@ -895,12 +966,13 @@ else if(cmd === '/setmult' && parts.length === 3){
   }
 
   else if(cmd === '/setscatter' && arg >= 0 && arg <= 100){
-    SCATTER_POS_PROB = arg / 100;
-    sendTelegram(`✅ Scatter rate diatur ke ${arg}%`);
-  }
+   SCATTER_POS_PROB = arg;
+   sendTelegram(`✅ Scatter rate diset ke ${arg}%`);
+ }
+
 
   else if(cmd === '/balance'){
-    sendTelegram(`✅ Saldo saat ini: Rp ${fmt(balance)}`);
+    sendTelegram(`✅ Saldo pemain Rp ${fmt(balance)}`);
   }
 
   else if(cmd === '/help'){
