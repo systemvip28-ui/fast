@@ -21,6 +21,7 @@ html,body{height:100%;margin:0}
 body{
   margin:0;
   min-height:100vh;
+  font-family: 'Lato', sans-serif;
   background: url("https://img91.wordpress.com/wp-content/uploads/2025/12/9550611aa1fd2611b1d6f286a4e812bf.gif") top center / 100% no-repeat;
   background-color:#04030a;
 }
@@ -32,10 +33,15 @@ body{
 .stage {
   background: var(--stage);
   padding: 20px;
+  border: solid rgba(110,200,255,.55) 1.5px;
   z-index: 9;
   border-radius: 16px;
   width: 100%;
   height: auto;
+}
+#autoText {
+  transition: opacity 0.5s ease;
+  font-weight: bold;
 }
 .top-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:17px}
 .zeus{display:flex;align-items:center;gap:8px}
@@ -45,7 +51,7 @@ body{
 .grid{width:100%;display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:calc((100% - 0px)/4);gap:10px;z-index:5}
 .cell{
   background:var(--box);border:2px solid var(--border);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;font-size:28px;color:#e0e0e0;
+  display:flex;align-items:center;justify-content:center;font-size:28px;
   transition:transform .28s,opacity .38s,box-shadow .28s,background .28s;
   user-select:none;position:relative;overflow:hidden;padding:6px;
 }
@@ -60,22 +66,73 @@ body{
 .bolt .txt{font-weight:900;color:#23160b;font-size:46px}
 .win-overlay{position:absolute;left:50%;transform:translateX(-50%);top:380px;background:linear-gradient(180deg,#9be8ff,#6ec8ff);color:#2a1b12;padding:12px 14px;border-radius:10px;font-weight:900;display:none;z-index:80}
 .mega-win{position:absolute;left:50%;top:400px;transform:translate(-50%,-50%) scale(.9);padding:22px 22px;background:linear-gradient(180deg,#9be8ff,#6ec8ff);color:#230f04;border-radius:10px;font-weight:900;font-size:22px;display:none;z-index:120;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
-.progress{width:86%;height:10px;margin-top:40px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
+.progress{border: none;width:86%;height:10px;margin-top:40px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
 .progress > i{display:block;height:100%;width:0%;background:linear-gradient(180deg,#9be8ff,#6ec8ff);border-radius:6px}
 .controls{display:flex;flex-direction:column;gap:8px}
 .row{display:flex;gap:8px;align-items:center}
 .btn{background:#2b1630;border:none;padding:8px 12px;border-radius:100px;color:#fff;cursor:pointer;font-weight:800;font-size:13px}
-.spin{background:var(--stage);color:var(--muted);border-radius:999px;padding:12px 18px;width:100%;font-size:14px}
+.spin{border: solid rgba(110,200,255,.55) 1.5px;background:var(--stage);color:var(--muted);border-radius:999px;padding:12px 18px;width:100%;font-size:14px}
 .buy{background:linear-gradient(180deg,#9be8ff,#6ec8ff);color:#042033}
-.betBox{color:var(--muted);font-weight:600;display:flex;align-items:center;gap:8px;background:rgba(19, 24, 43, 0.3);padding:6px 8px;border-radius:8px}
-.small{background:var(--stage);padding:6px 8px;font-size:14px}
-.small1{background:var(--stage);pointer-events:none;color: var(--muted);margin-bottom:-20px;margin-top:10px;padding:9px 8px;width:100%;font-size:13px}
+.betBox {
+  border: solid rgba(110,200,255,.55) 1.5px;
+  color: var(--muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0B1026;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.small {
+  width: 30px;
+  border-radius: 8px;
+  background: none;
+  padding: 3px 8px;
+  font-size: 20px;
+}
+#betDisplay {
+  min-width: 60px;
+  text-align: center;
+  position: relative;
+  padding: 7px; /* jarak kiri dan kanan garis */
+}
+
+/* Garis vertikal dengan gap */
+#betDisplay::before,
+#betDisplay::after {
+  content: "";
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  width: 1.5px;
+  background: rgba(110,200,255,.55);
+}
+
+#betDisplay::before {
+  left: -20px; /* garis kiri */
+}
+
+#betDisplay::after {
+  right: -20px; /* garis kanan */
+}
+#decBet {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+#incBet {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+.small1{border: solid rgba(110,200,255,.55) 1.5px; background:var(--stage);pointer-events:none;color: var(--muted);margin-bottom:-20px;margin-top:10px;padding:9px 8px;width:100%;font-size:13px}
 .history {
     color: var(--muted);
     border-radius: 10px;
     padding: 8px;
     overflow-y: auto;
-    height: calc(11vh - 20px);
+    height: calc(12vh - 20px);
     box-sizing: border-box; 
 }
 .history{justify-content:space-between;padding:6px}
@@ -171,12 +228,13 @@ label[for="scatterRange"] {
 .saldo-card{
   background: var(--stage);
   border-radius: 12px;
-  padding: 14px;
+  padding: 12px;
+  border: solid rgba(110,200,255,.55) 1.5px;
   margin-top: 10px;
   min-width: 160px;
 }
 .saldo-value{
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--muted);
 }
@@ -276,7 +334,7 @@ label[for="scatterRange"] {
     <div class="stage" id="stage">
       <div class="top-row">
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="margin-left:3px;font-size:17px;font-weight: bold;color: var(--muted);" class="muted">EXTRA ID #<span id="gameId">00000</span>
+          <div style="margin-left:3px;font-size:13px;font-weight: bold;color: var(--muted);" class="muted">EXTRA #<span id="gameId">00000</span>
         </div>
 
         </div>
@@ -296,7 +354,8 @@ label[for="scatterRange"] {
 
       <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px">
         <div class="progress"><i id="progressBar"></i></div>
-        <div class="muted" style="margin-top:10px;font-size:14px">🎰🎰🎰🎰 Symbols mendapatkan 12x free spins</div>
+        <div class="muted" id="autoText" style="margin-top:10px;font-size:12px">🎰🎰🎰🎰 Symbols mendapatkan 12x free spins
+        </div>
       </div>
     </div>
 
@@ -391,7 +450,7 @@ const SCATTER_MAX = 4;
 const FREE_SPIN_COUNT = 12;
 const SPIN_DELAY = 350;
 const BET_MIN = 1000;
-const BET_MAX = 1000000;
+const BET_MAX = 500000;
 
 /* ====== STATE ====== */
 let balance = 0;
@@ -1245,6 +1304,28 @@ document.body.addEventListener('click', async () => {
   }
 
   document.addEventListener('click', startSound);
+</script>
+<script>
+const messages = [
+  "8 Symbols atau lebih multiplier hingga 500x",
+  "Menangkan multiplier symbols terbentuk",
+  "🎰🎰🎰🎰 Symbols mendapatkan 12x free spins"
+];
+
+let index = 0;
+
+function changeText() {
+  const el = document.getElementById("autoText");
+
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.textContent = messages[index];
+    el.style.opacity = 1; 
+    index = (index + 1) % messages.length; 
+  }, 500); 
+}
+
+setInterval(changeText, 7000);
 </script>
 </body>
 </html>
