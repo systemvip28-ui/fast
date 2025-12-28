@@ -70,7 +70,14 @@ body{
 .betBox{color:var(--muted);font-weight:600;display:flex;align-items:center;gap:8px;background:rgba(19, 24, 43, 0.3);padding:6px 8px;border-radius:8px}
 .small{background:var(--stage);padding:6px 8px;font-size:14px}
 .small1{background:var(--stage);pointer-events:none;color: var(--muted);margin-bottom:-20px;margin-top:10px;padding:9px 8px;width:100%;font-size:13px}
-.history{color:var(--muted);border-radius:10px;padding:8px;overflow:auto;font-size:13px}
+.history {
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 8px;
+    overflow-y: auto;
+    height: calc(11vh - 20px);
+    box-sizing: border-box; 
+}
 .history{justify-content:space-between;padding:6px}
 .muted{color:var(--muted);font-size:14px}
 .controls-bottom{display:flex;gap:10px;align-items:center;justify-content:space-between}
@@ -319,12 +326,11 @@ label[for="scatterRange"] {
         </div>
       </div>
 
-          <div class="history" id="history"><div class="muted"></div></div>
-        </div>
-        </div>
-      </div>
+  <div class="wrapper">
+    <div class="history" id="history">
+        <div class="muted"></div>
     </div>
-  </div>
+</div>
 
   <div class="countdown-overlay" id="countdownOverlay" aria-hidden="true">
   <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
@@ -393,6 +399,7 @@ let bet = 2000;
 let winRate = 7; 
 let SCATTER_POS_PROB = 10;
 let scatterRate = 0;
+let firstFreeSpin = true;
 let freeSpins = 0;
 let pendingFreeSpins = 0;
 let autoActive = false;
@@ -691,12 +698,16 @@ function megaWin(total, mult){
 
 /* ====== HISTORY ====== */
 function pushHistory(entry){
-  spinCounter++;
-  const row = document.createElement('div'); row.className = 'row';
+  const gameId = currentGameId;
+  const row = document.createElement('div'); 
+  row.className = 'row';
+
   const emoji = entry.winSymbol ? entry.winSymbol.e : (entry.scatter ? '🎰 x' + entry.scatterCount : '—');
   const mult = entry.mult ? 'x' + entry.mult : '-';
   const winTxt = entry.win ? '+ Rp ' + fmt(entry.win) : '-';
-  row.innerHTML = `<div style="font-size:16px;display:flex;font-weight:500">#${spinCounter} | BET | ${fmt(entry.bet||0)} | RESULT | ${mult} | ${winTxt} </div></div>`;
+
+  row.innerHTML = `<div style="font-size:14px;display:flex;font-weight:500">#${gameId} | BET | ${fmt(entry.bet||0)} | RESULT | ${mult} | ${winTxt}</div>`;
+  
   historyEl.prepend(row);
   while(historyEl.childElementCount > 120) historyEl.removeChild(historyEl.lastChild);
 }
@@ -777,7 +788,7 @@ async function doSpin(isAuto=false){
   if(!wasFree) balance -= bet;
   updateUI();
 
-  const forceWin = (Math.random() * 100) < winRate;
+  const forceWin = (wasFree && firstFreeSpin) ? true : ((Math.random() * 100) < winRate);
 
   for(let s=0;s<6;s++){
     renderGrid(generateSymbols(false, false));
@@ -852,6 +863,10 @@ if(!didWin && !didScatter){
 
   if(wasFree){
     freeSpins = Math.max(0, freeSpins - 1);
+  }
+
+  if(wasFree && firstFreeSpin){
+  firstFreeSpin = false; 
   }
 
   updateUI();
@@ -1001,7 +1016,7 @@ function showFreeSpinPopup(scount){
       <br><br>
       <small>Free Spins akan dimulai</small>
     `,
-    timer: 3500,
+    timer: 3400,
     timerProgressBar: true,
     showConfirmButton: false,
     allowOutsideClick: false,
